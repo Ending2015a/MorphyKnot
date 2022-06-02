@@ -30,7 +30,8 @@ This repo contains the following two variations:
 
 ### Built-in Render Pipeline
 
-The following lines in your surface shader enbale the customization of vertex shader and GPU instancing
+
+First, you add these lines into your surface shader to enable the customizatoin of vertex shader and instancing procedure. Adding the `multi_compile_instancing` generates two variants of the surface shader for instancing mode ON and OFF.
 ```
 #pragma surface surf Standard fullforwardshadows addshadow vertex:vert
 #pragma instancing_options assumeuniformscaling procedural:ConfigureProcedural
@@ -39,7 +40,7 @@ The following lines in your surface shader enbale the customization of vertex sh
 #pragma target 5.0
 ```
 
-Then, define your compute buffers and the default properties if GPU instancing is off. Note that you have to block all the codes that only available when GPU instancing is ON by `UNITY_*_INSTANCING_ENABLED`. Otherwise, the Unity will show some compile errors. The `*` depends on what draw calls you are using. (In this repo, I'm using `DrawMeshInstancedProcedural`)
+Then, define your compute buffers for instancing ON and the default properties for instancing OFF. Note that you have to block all the codes that only available when GPU instancing is ON using macro `UNITY_*_INSTANCING_ENABLED`. Otherwise, Unity will throw some compiler errors. The `*` depends on what drwa calls you are using. (`DrawMeshInstancedProcedural` in this repo)
 ```hlsl
 #if defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
 struct Particle
@@ -68,7 +69,7 @@ void ConfigureProcedural()
 }
 ```
 
-In your vertex shader, you can get the `instanceID` that has already defined by the [built-in structure type `appdata_full`](https://github.com/TwoTailsGames/Unity-Built-in-Shaders/blob/master/CGIncludes/UnityCG.cginc#L82) when GPU instancing is ON. You can also perform some additional computations pre-particle here, and assign the results to a custom structure `Input`. This structure `Input` will then be passed to Surface shader.
+In your vertex shader, you can access the `instanceID` pre-defined in the [built-in structure type `appdata_full`](https://github.com/TwoTailsGames/Unity-Built-in-Shaders/blob/master/CGIncludes/UnityCG.cginc#L82) in instancing ON block, and perform some additional pre-particle computations here. Then assign the results to a custom structure `Input`. This structure `Input` will be passed to Surface shader.
 ```hlsl
 struct Input
 {
@@ -86,7 +87,7 @@ void vert(inout appdata_full v, out Input o)
 }
 ```
 
-Finally, assign the colors in your custom structure to surface output
+Finally, assign the properties in your custom structure to surface output
 ```hlsl
 void surf (Input IN, inout SurfaceOutputStandard o)
 {
@@ -98,16 +99,16 @@ void surf (Input IN, inout SurfaceOutputStandard o)
 }
 ```
 
-Also, don't forget to turn on `Enable GPU Instancing` for your material.
+BTW, don't forget to turn on `Enable GPU Instancing` for your material.
 
 ### Universal Render Pipeline
 
-We can do the same thing in UPR with shader graph. First create the shader graph:
+In URP, we have to do these procedures in shader graph. First create the shader graph:
 
 ![](https://github.com/Ending2015a/MorphyKnot/blob/master/assets/graph.png)
 
-* Note that the `Instance ID` node is only available for newer version (I don't know the specific version, but if your shader graph has no `Instance ID` node please upgrade the Unity.)
-* Type the following string into `Inject` node to enable per-particle matrix configure
+* Note that the `Instance ID` node is only available for newer version (I don't know the exact version, but if your shader graph has no `Instance ID` node please upgrade the Unity.)
+* Type the following string into `Inject` node to enable per-particle configuration
 ```hlsl
 #pragma instancing_options assumeuniformscaling procedural:ConfigureProcedural
 #pragma editor_sync_compilation
@@ -156,6 +157,3 @@ void ParticleGetter_float(
     Alpha = color.a;
 }
 ```
-
-
-
